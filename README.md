@@ -1,4 +1,4 @@
-# -TheIsleSwitcher
+# TheIsleSwitcher
 The Isle Switcher: A desktop app for switching between Legacy and Evrima for the game 'The Isle' with a single click.
 
 You only need to download the **TheIsleSwitcher.zip** file and run **TheIsleSwitcher.exe** for this to work!
