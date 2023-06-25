@@ -21,7 +21,14 @@ namespace TheIsleSwitcher
 
         public MainWindow()
         {
-            InitializeComponent();
+            try
+            {
+                InitializeComponent();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Something catastrophic happened on startup. Please see FAQ or update to newest version. If still problem still occours, please contact support at https://github.com/Chreld/TheIsleSwitcherCode and attatch this exception message:\n {ex.Message}");
+            }
         }
 
         private void SwitchToLegacyEvent(object sender, RoutedEventArgs e)
@@ -47,54 +54,56 @@ namespace TheIsleSwitcher
             // Search for the Steamlibrary folder on each drive.
             foreach (string drive in drives)
             {
-
-                var driveContents = Directory.GetDirectories(drive);
-
-                /*
-                 * Search through the contents of the driver.
-                 * 
-                 * Note: A recursive method would be easier to maintain (and more efficent), but I couldn't quickly come up with a limited scope for the search,
-                 * where it didn't spend way too long (hours maybe) searching all folders on the entire PC.
-                 * So we limit it to 3 subfolders with less efficent but limited search scope.
-                 * It is assumed that the user has their SteamLibary installed at a default place, but we widen the scope a little deeper.
-                 */
-                foreach (var driveContent in driveContents)
+                try
                 {
-                    try
+                    var driveContents = Directory.GetDirectories(drive);
+
+                    /*
+                     * Search through the contents of the driver.
+                     * 
+                     * Note: A recursive method would be easier to maintain (and more efficent), but I couldn't quickly come up with a limited scope for the search,
+                     * where it didn't spend way too long (hours) searching all folders on the entire PC.
+                     * So we limit it to 3 subfolders with less efficent but limited search scope.
+                     * It is assumed that the user has their SteamLibary installed at a default place, but with a wider scope it will account for most if not all setups.
+                     */
+                    foreach (var driveContent in driveContents)
                     {
-                        if (driveContent.Contains(steamLibrary))
+                        try
                         {
-                            steamPaths.Add(driveContent.ToString());
-                        }
-                        else
-                        {
-                            var driveContentOne = Directory.GetDirectories(driveContent);
-
-                            foreach (var depthOne in driveContentOne)
+                            if (driveContent.Contains(steamLibrary))
                             {
-                                if (depthOne.Contains(steamLibrary))
-                                {
-                                    steamPaths.Add(depthOne.ToString());
-                                }
-                                else
-                                {
-                                    var driveContentTwo = Directory.GetDirectories(depthOne);
+                                steamPaths.Add(driveContent.ToString());
+                            }
+                            else
+                            {
+                                var driveContentOne = Directory.GetDirectories(driveContent);
 
-                                    foreach (var depthTwo in driveContentTwo)
+                                foreach (var depthOne in driveContentOne)
+                                {
+                                    if (depthOne.Contains(steamLibrary))
                                     {
-                                        if (depthTwo.Contains(steamLibrary))
-                                        {
-                                            steamPaths.Add(depthTwo.ToString());
-                                        }
-                                        else
-                                        {
-                                            var driveContentThree = Directory.GetDirectories(depthTwo);
+                                        steamPaths.Add(depthOne.ToString());
+                                    }
+                                    else
+                                    {
+                                        var driveContentTwo = Directory.GetDirectories(depthOne);
 
-                                            foreach (var depthThree in driveContentThree)
+                                        foreach (var depthTwo in driveContentTwo)
+                                        {
+                                            if (depthTwo.Contains(steamLibrary))
                                             {
-                                                if (depthThree.Contains(steamLibrary))
+                                                steamPaths.Add(depthTwo.ToString());
+                                            }
+                                            else
+                                            {
+                                                var driveContentThree = Directory.GetDirectories(depthTwo);
+
+                                                foreach (var depthThree in driveContentThree)
                                                 {
-                                                    steamPaths.Add(depthThree.ToString());
+                                                    if (depthThree.Contains(steamLibrary))
+                                                    {
+                                                        steamPaths.Add(depthThree.ToString());
+                                                    }
                                                 }
                                             }
                                         }
@@ -102,24 +111,33 @@ namespace TheIsleSwitcher
                                 }
                             }
                         }
+                        catch (UnauthorizedAccessException)
+                        {
+                            continue;
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Could not find any Steam Library on your PC.\nException: {ex.Message}");
+                        }
                     }
-                    catch (UnauthorizedAccessException)
-                    {
-
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Could not find any Steam Library on your PC.\nException: {ex}");
-                    }
-
+                }
+                catch (IOException)
+                {
+                    continue;
                 }
             }
 
-            // Search through the steamLibraries for the game, The Isle.
-            try
+            // If Steam Library not found.
+            if (steamPaths.Count == 0)
             {
-                // If Steam Library was found.
-                foreach (var steamPath in steamPaths)
+                MessageBox.Show($"Could not find the steam library on your PC.");
+                return;
+            }
+
+            // If Steam Library was found.
+            foreach (var steamPath in steamPaths)
+            {
+                try
                 {
                     // Games are stored in the 'Common' folder, combite its adress with where we found the Steam Library.
                     string steamAppFolder = Path.Combine(steamPath, "steamapps");
@@ -139,16 +157,26 @@ namespace TheIsleSwitcher
                         }
                     }
                 }
+                catch (UnauthorizedAccessException)
+                {
+                    continue;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Could not get URI of The Isle. Exception:\n {ex.Message}");
+                }
             }
-            catch (Exception ex)
+
+            if (gameFound.Count == 0)
             {
-                MessageBox.Show($"Could not find 'The Isle' installed on your PC.\nException: {ex}.");
+                MessageBox.Show("Could no find any installations of The Isle on your PC.");
+                return;
             }
 
             // Go through the list steamGame, and determine which is Legacy and which is Evrima based on the presence of EasyAntiCheat.
-            try
+            foreach (var steamGame in gameFound)
             {
-                foreach (var steamGame in gameFound)
+                try
                 {
                     string[] theIslesContent = Directory.GetFiles(steamGame);
 
@@ -164,7 +192,6 @@ namespace TheIsleSwitcher
                         var testPath = steamGame.Substring(0, steamGame.LastIndexOf("\\") + 1);
                         newTheIslesContent.Add(testPath + theIsle + legacy);
                     }
-
                     else
                     {
                         //if (steamGame != CommonFolder + "\\" + theIsle + evrima)
@@ -176,10 +203,14 @@ namespace TheIsleSwitcher
                         newTheIslesContent.Add(testPath + theIsle + evrima);
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Something went wrong while renaming the Legacy and Evrima version.\nException: {ex}.");
+                catch (UnauthorizedAccessException)
+                {
+                    continue;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Somehing went wrong while renaming Legacy and Evrima:\n {ex.Message}");
+                }
             }
 
             // Activate the version requested.
