@@ -10,7 +10,7 @@
     <Grid HorizontalAlignment="Center" Width="1093" Height="434" VerticalAlignment="Center">
         <Grid>
             <Image Source="Resources/WFR.png"/>
-            <TextBlock HorizontalAlignment="Left" Height="17" Margin="364,407,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="26"><Run Language="da-dk" Text="v.1.0"/></TextBlock>
+            <TextBlock HorizontalAlignment="Left" Height="17" Margin="364,407,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="26"><Run Language="en-GB" Text="v.1.1"/></TextBlock>
         </Grid>
 
         <Button Content="Switch To Legacy" Height="52" Margin="386,126,577,0" VerticalAlignment="Top" Click="SwitchToLegacyEvent" Background="Aqua"/>
