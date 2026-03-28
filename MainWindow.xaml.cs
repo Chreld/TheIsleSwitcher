@@ -13,9 +13,10 @@ namespace TheIsleSwitcher
         private const string TheIsle = "The Isle";
         private const string Legacy = "_Legacy";
         private const string Evrima = "_Evrima";
-        private const string SteamLibrary = "SteamLibrary";
+        private const string Steamapps = "steamapps";
 
-        private string currentVersion = "new version";
+        private string currentVersion = "";
+
         private int searchDepth = 3;
 
         public MainWindow()
@@ -58,7 +59,6 @@ namespace TheIsleSwitcher
                     MessageBox.Show("Could not find any installations of The Isle on your PC.");
                     return;
                 }
-
                 UpdateGameVersions(gamePaths);
                 ActivateVersion(gamePaths, targetVersion);
             }
@@ -75,7 +75,7 @@ namespace TheIsleSwitcher
             {
                 try
                 {
-                    SearchDirectories(drive, SteamLibrary, searchDepth, steamPaths);
+                    SearchDirectories(drive, Steamapps, searchDepth, steamPaths);
                 }
                 catch (UnauthorizedAccessException) { }
                 catch (IOException) { }
@@ -111,7 +111,7 @@ namespace TheIsleSwitcher
             {
                 try
                 {
-                    var commonFolder = Path.Combine(steamPath, "steamapps", "common");
+                    var commonFolder = Path.Combine(steamPath, "common");
                     if (Directory.Exists(commonFolder))
                     {
                         foreach (var gameFolder in Directory.GetDirectories(commonFolder))
@@ -142,7 +142,7 @@ namespace TheIsleSwitcher
                     var version = isEvrima ? Evrima : Legacy;
                     var expectedPath = TheIsle + version;
 
-                    if (!Path.GetFileName(gamePath).Equals(expectedPath, StringComparison.OrdinalIgnoreCase))
+                    if (!Path.GetFileName(gamePath).Equals(expectedPath))
                     {
                         FileSystem.RenameDirectory(gamePath, expectedPath);
                     }
@@ -155,7 +155,6 @@ namespace TheIsleSwitcher
                     MessageBox.Show($"Error updating game version: {ex.Message}");
                 }
             }
-
             return updatedPaths;
         }
 
@@ -164,10 +163,9 @@ namespace TheIsleSwitcher
             var targetPath = gamePaths.FirstOrDefault(path => path.Contains(targetVersion));
             if (targetPath == null)
             {
-                MessageBox.Show($"The specified version '{targetVersion}' could not be activated.");
+                MessageBox.Show($"The specified version '{targetVersion}' could not be activated. Check if it's already activated");
                 return;
             }
-
             try
             {
                 FileSystem.RenameDirectory(targetPath, TheIsle);
